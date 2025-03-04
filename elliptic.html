@@ -1,0 +1,127 @@
+<html>
+
+<head>
+    <script>
+        window.onload = () => {
+            elem_a = document.getElementById("a");
+            elem_b = document.getElementById("b");
+            elem_k = document.getElementById("k");
+            elem_n = document.getElementById("n");
+            elem_wh = document.getElementById("wh");
+            elem_va = document.getElementById("va");
+            elem_vb = document.getElementById("vb");
+            elem_vk = document.getElementById("vk");
+            elem_vn = document.getElementById("vn");
+            elem_vwh = document.getElementById("vwh");
+            elem_c = document.getElementById("c");
+            
+            let pa, pb, pk, pn, pwh;
+            parseParams = () => {
+                pa = parseFloat(elem_a.value);
+                elem_va.innerText = pa.toString();
+
+                pb = parseFloat(elem_b.value);
+                elem_vb.innerText = pb.toString();
+
+                pk = parseInt(elem_k.value);
+                elem_vk.innerText = pk.toString();
+
+                pn = parseInt(elem_n.value);
+                elem_vn.innerText = pn.toString();
+
+                pwh = parseInt(elem_wh.value);
+                elem_vwh.innerText = pwh.toString();
+            }
+
+            inputHandler = () => {
+                parseParams();
+                calc();
+            }
+
+            elem_a.oninput = inputHandler;
+            elem_b.oninput = inputHandler;
+            elem_k.oninput = inputHandler;
+            elem_n.oninput = inputHandler;
+            elem_wh.oninput = inputHandler;
+
+            parseParams();
+
+            calc = () => {
+                drawAxes = document.getElementById("cboxAxes").checked;
+
+                l = -pwh/2; r = pwh/2; t = pwh/2; b = -pwh/2;
+                w = r - l;
+                h = t - b;
+                elem_c.width = w;
+                elem_c.height = h;
+                ctx = elem_c.getContext("2d");
+                id = ctx.createImageData(w, h);
+                d = id.data;
+
+                for (x = l; x < r; x++) {
+                    for (y = b; y < t; y++) {
+                        idx = (y - b) * w + (x - l);
+                        v = elliptic(x / pk, y / pk, pa, pb);
+                        v = Math.min(Math.max(Math.abs(v), 0), 1);
+                        v = Math.pow((1.0 - v), pn);
+                        d[4 * idx + 0] = v * 255;
+                        d[4 * idx + 1] = 0;
+                        d[4 * idx + 2] = drawAxes ? ((x == 0) ? 255 : ((y == 0) ? 255 : 0)) : 0;
+                        d[4 * idx + 3] = 255;
+                    }
+                }
+                ctx.putImageData(id, 0, 0);
+            }
+
+            elliptic = (x, y, a, b) => {
+                return y * y - (x * x * x + a * x + b);
+            }
+
+            calc();
+        }
+    </script>
+</head>
+
+<body>
+    <div>
+        <h1>Elliptic Curve Plotter</h1>
+        <p>
+            Plots standard elliptic curve of the form <span style="font-weight: 800;">y^2 = x^3 + ax + b</span>.<br/>
+            <span style="font-weight: 800;">a:</span> curve parameter a<br/>
+            <span style="font-weight: 800;">b:</span> curve parameter b<br/>
+            <span style="font-weight: 800;">k:</span> pixel to coordinate scaling. x=pixel_x/k, same for y.<br/>
+            <span style="font-weight: 800;">n:</span> render sharpness factor. Let e(x, y) = |y^2 - (x^3 + ax + b)|. Brightness of a pixel is (1 - e)^n.<br/>
+            <span style="font-weight: 800;">w/h:</span> size of the canvas in pixels. Width and height are equal to this value.<br/>
+            <h3>Note: right click and "Save as..." in the canvas are to download the plotted image.</h2>
+        </p>
+    </div>
+    <div>
+        <label>a:</label>
+        <input type="range" id="a" min="-5" max="5" step="0.01" value="-1.0" />
+        <span id="va"></span>
+        <br />
+        <label>b:</label>
+        <input type="range" id="b" min="-5" max="5" step="0.01" value="1.0" />
+        <span id="vb"></span>
+        <br />
+        <label>k:</label>
+        <input type="range" id="k" min="10" max="150" step="10" value="100" />
+        <span id="vk"></span>
+        <br />
+        <label>n:</label>
+        <input type="range" id="n" min="1" max="50" step="1" value="10" />
+        <span id="vn"></span>
+        <br />
+        <label>w=h=:</label>
+        <input type="range" id="wh" min="100" max="1000" step="100" value="500" />
+        <span id="vwh"></span>
+        <br />
+        <input type="button" onclick="calc()" value="recalculate" />
+        <input type="checkbox" id="cboxAxes" checked="true" onchange="calc()" /><span>draw coordinate axes</span>
+    </div>
+    <br />
+    <canvas id="c" style="background-color: #dddddd;"></canvas>
+
+</body>
+
+</html>
